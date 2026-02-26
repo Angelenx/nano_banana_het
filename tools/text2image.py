@@ -7,6 +7,15 @@ from io import BytesIO
 from dify_plugin.entities.tool import ToolInvokeMessage
 from dify_plugin import Tool
 
+
+def _get_proxies(credentials: dict) -> dict | None:
+    """从凭据中解析正向代理 URL，返回 requests 可用的 proxies 字典。"""
+    url = (credentials.get("proxy_url") or "").strip()
+    if not url:
+        return None
+    return {"http": url, "https": url}
+
+
 class Text2ImageTool(Tool):
     def _invoke(
         self, tool_parameters: dict
@@ -22,8 +31,10 @@ class Text2ImageTool(Tool):
             ToolInvokeMessage: 工具调用消息，包括进度反馈和最终图像结果
         """
         # 1. 获取 API 配置
-        api_key = self.runtime.credentials.get("api_key")
+        credentials = self.runtime.credentials
+        api_key = credentials.get("api_key")
         api_url = "https://openrouter.ai/api/v1/chat/completions"
+        proxies = _get_proxies(credentials)
         
         # 2. 获取和验证参数
         prompt = tool_parameters.get("prompt", "")
@@ -66,7 +77,9 @@ class Text2ImageTool(Tool):
                 try:
                     # 下载图像并转换为base64格式
                     yield self.create_text_message("📥 正在下载图像...")
-                    img_response = requests.get(input_image_url, timeout=30)
+                    img_response = requests.get(
+                        input_image_url, timeout=30, proxies=proxies
+                    )
                     img_response.raise_for_status()
                     
                     # 验证图像数据
@@ -132,6 +145,7 @@ class Text2ImageTool(Tool):
                 api_url,
                 headers=headers,
                 data=json.dumps(payload),  # 使用 data 参数，与 zz.py 保持一致
+                proxies=proxies,
                 timeout=60
             )
             
@@ -209,7 +223,9 @@ class Text2ImageTool(Tool):
                     # 如果是 URL 格式，下载图像
                     yield self.create_text_message(f"🌐 正在下载第 {i+1} 张图像...")
                     try:
-                        img_response = requests.get(image_url, timeout=30)
+                        img_response = requests.get(
+                            image_url, timeout=30, proxies=proxies
+                        )
                         img_response.raise_for_status()
                         
                         # 验证图像数据

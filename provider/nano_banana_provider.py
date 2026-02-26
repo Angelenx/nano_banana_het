@@ -35,7 +35,7 @@ class NanaBananaProvider(ToolProvider):
                 )
             
             # 4. 发送测试请求验证 API key 有效性
-            self._test_openrouter_connection(api_key)
+            self._test_openrouter_connection(credentials)
             
         except ToolProviderCredentialValidationError:
             # 重新抛出已知的验证错误
@@ -45,38 +45,36 @@ class NanaBananaProvider(ToolProvider):
                 f"OpenRouter API 凭据验证失败: {str(e)}"
             )
     
-    def _test_openrouter_connection(self, api_key: str) -> None:
+    def _get_proxies(self, credentials: dict[str, Any]) -> dict[str, str] | None:
+        """从凭据中解析正向代理 URL，返回 requests 可用的 proxies 字典。"""
+        url = (credentials.get("proxy_url") or "").strip()
+        if not url:
+            return None
+        return {"http": url, "https": url}
+
+    def _test_openrouter_connection(self, credentials: dict[str, Any]) -> None:
         """
         测试 OpenRouter API 连接有效性
         
         Args:
-            api_key: OpenRouter API key
+            credentials: 凭据字典，包含 api_key 和可选的 proxy_url
             
         Raises:
             ToolProviderCredentialValidationError: 当 API 连接测试失败时
         """
+        api_key = credentials.get("api_key", "")
+        proxies = self._get_proxies(credentials)
         try:
+            # 使用公开的模型列表接口进行校验，避免因为模型不可用导致 404
             headers = {
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
-            
-            # 使用一个更通用的模型进行测试，避免404错误
-            test_payload = {
-                "model": "deepseek/deepseek-chat-v3.1:free",  # 使用更常见的模型进行验证
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": "test"  # 简化内容格式
-                    }
-                ],
-                "max_tokens": 1  # 最小 token 数量，减少费用
-            }
-            
-            response = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
+
+            response = requests.get(
+                "https://openrouter.ai/api/v1/models",
                 headers=headers,
-                json=test_payload,
+                proxies=proxies,
                 timeout=10
             )
             
@@ -97,7 +95,7 @@ class NanaBananaProvider(ToolProvider):
                 raise ToolProviderCredentialValidationError(
                     "OpenRouter 服务器暂时不可用"
                 )
-            elif response.status_code not in [200, 400]:  # 400 可能是因为测试请求格式
+            elif response.status_code != 200:
                 raise ToolProviderCredentialValidationError(
                     f"OpenRouter API 连接测试失败，状态码: {response.status_code}"
                 )

@@ -49,3 +49,7 @@ tools/.ipynb_checkpoints/text2image-checkpoint.py
 .ipynb_checkpoints/README_CN-checkpoint.md
 .gitignore
 tools/.ipynb_checkpoints/text2image-checkpoint.yaml
+
+# 虚拟环境
+.venv/
+dify-plugin-linux-amd64

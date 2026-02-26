@@ -43,19 +43,23 @@ parameters:
   name: model
   type: select
   options:
-  - label:
-      en_US: Gemini 2.5 Flash (Free) - Fast & Good Quality
-      zh_Hans: Gemini 2.5 Flash (免费) - 快速且质量良好
-    value: "google/gemini-2.5-flash-image-preview:free"
+  # - label:
+  #     en_US: Gemini 2.5 Flash (Free) - Fast & Good Quality
+  #     zh_Hans: Gemini 2.5 Flash (免费) - 快速且质量良好(无法使用)
+  #   value: "google/gemini-2.5-flash-image-preview:free(Cannot use)"
   - label:
       en_US: Gemini 2.5 Flash (Premium) - Enhanced Performance
       zh_Hans: Gemini 2.5 Flash (付费) - 增强性能
-    value: "google/gemini-2.5-flash-image-preview"
+    value: "google/gemini-2.5-flash-image"
   - label:
       en_US: Claude 3.5 Sonnet (Premium) - Creative & Artistic
       zh_Hans: Claude 3.5 Sonnet (付费) - 创意艺术风格
-    value: "anthropic/claude-3-5-sonnet-20241022"
-  default: "google/gemini-2.5-flash-image-preview:free"
+    value: "anthropic/claude-3.5-sonnet"
+  - label:
+      en_US: gemini-3-pro-image-preview (Premium) - High Fidelity & Detail
+      zh_Hans: gemini-3-pro-image-preview (付费)- 高保真与细节
+    value: "google/gemini-3-pro-image-preview"
+  default: "google/gemini-2.5-flash-image"
   required: true
 
 - form: form
